@@ -1,0 +1,85 @@
+caffe建立特征库:
+1.
+find `pwd`/data/trainimage/ -type f -exec echo {} \; > examples/temp/temp_train.txt
+
+2.
+sed "s/$/ 0/" examples/temp/temp_train.txt > examples/temp/file_list_train.txt
+
+3.
+./build/tools/extract_features_txt models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel examples/temp/imagenet_val_train.prototxt fc7 examples/temp/features 20 lmdb
+
+
+====================================================================================================================================================
+
+
+caffe特征提取:
+1
+find `pwd`/data/testimage -type f -exec echo {} \; > examples/temp/temp_test.txt
+
+2
+sed "s/$/ 0/" examples/temp/temp_test.txt > examples/temp/file_list_test.txt
+
+./build/examples/cpp_classification/class_single
+
+3
+./build/tools/image_retrieval models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel examples/temp/imagenet_val.prototxt fc7 examples/temp/features 1 lmdb
+
+4.
+./build/tools/Image_Retrieval models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel examples/temp/imagenet_val.prototxt fc7 examples/temp/features 1 lmdb
+
+5.
+./build/tools/Class_Retrieval models/bvlc_reference_caffenet/bvlc_reference_caffenet.caffemodel examples/temp/imagenet_val.prototxt fc7 examples/temp/features 1 lmdb
+
+
+=====================================================================================================================================================
+微调:
+
+find `pwd`/important/resultimage/Train_Image -type f -exec echo {} \; > important/temp_train1.txt
+sed "s/$/ 0/" important/temp_train1.txt > important/file_list_train.txt
+
+
+
+find `pwd`/important/resultimage/FALSE_Image -type f -exec echo {} \; > important/temp_train2.txt
+sed "s/$/ 1/" important/temp_train2.txt > important/file_list_train1.txt
+
+
+生成 LMDB:
+
+ sudo sh examples/myfinetuning/create_lmdb.sh
+
+计算均值文件:
+
+sudo build/tools/compute_image_mean examples/myfinetuning/img_train_lmdb/ examples/myfinetuning/mean.binaryproto
+
+微调:
+./build/tools/caffe train -solver /root/caffe/examples/myfinetuning/solver.prototxt -weights /root/caffe/examples/myfinetuning/bvlc_reference_caffenet.caffemodel 
+
+记录log
+./build/tools/caffe train -solver /root/caffe/examples/myfinetuning/solver.prototxt -weights /root/caffe/examples/myfinetuning/bvlc_reference_caffenet.caffemodel 2>&1   | tee examples/myfinetuning/log/log.log
+
+画曲线
+python plot_training_log.py 6 train_loss.png log.log
+====================================================================================================================================================
+cmake:
+cmake -D CPU_ONLY=ON -D CMAKE_PREFIX_INSTALL=/usr/local ..
+
+make all
+
+make install
+====================================================================================================================================================
+SVM:
+find `pwd`/important/resultimage/Train_Image -type f -exec echo {} \; > important/pic/1.txt
+sed "s/$/000/" important/pic/1.txt > important/pic/2.txt
+
+
+g++ -o SVM_Class SVM_Class.cpp -lopencv_dnn -lopencv_highgui -lopencv_imgcodecs -lopencv_imgproc -lstdc++ -lopencv_core -lopencv_features2d -lopencv_xfeatures2d -lopencv_ml
+====================================================================================================================================================
+BOW分类:
+g++ -o BOW_Class BOW_Class.cpp -lopencv_dnn -lopencv_highgui -lopencv_imgcodecs -lopencv_imgproc -lstdc++ -lopencv_core -lopencv_features2d -lopencv_xfeatures2d
+====================================================================================================================================================
+图像旋转输出:
+g++ -o rotatetImage rotatetImage.cpp -lopencv_highgui -lopencv_imgcodecs -lopencv_imgproc -lstdc++ -lopencv_core
+
+====================================================================================================================================================
+
+
