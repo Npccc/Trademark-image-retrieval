@@ -1,2 +1,1 @@
 # Trademark-image-retrieval
-CNN
